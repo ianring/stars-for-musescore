@@ -53,47 +53,62 @@ function applyToNotesInSelection(func) {
 		endStaff = cursor.staffIdx;
 	}
 	console.log(startStaff + " - " + endStaff + " - " + endTick)
+
 	for (var staff = startStaff; staff <= endStaff; staff++) {
 		for (var voice = 0; voice < 4; voice++) {
 			cursor.rewind(1); // sets voice to 0
-			cursor.voice = voice; //voice has to be set after goTo
+			cursor.voice = voice; // voice has to be set after goTo
 			cursor.staffIdx = staff;
 			if (fullScore) {
 				cursor.rewind(0) // if no selection, beginning of score
 			}
 			while (cursor.segment && (fullScore || cursor.tick < endTick)) {
-				if (cursor.element && cursor.element.type == Element.CHORD) {
-					var chord = cursor.element;
-					var notes = chord.notes;
-					for (var i = 0; i < notes.length; i++) {
-						var note = notes[i];
-						if (note) {
-							func(note, cursor, chord.durationType);
-						}
-					}
+
+				if (cursor.element) {
+					addStar(cursor);
 				}
+
 				cursor.next();
 			}
 		}
 	}
 }
 
-function addStar(note, cursor, durationType) {
-	if (note.type == Element.NOTE) {
+function transformDuration(durationType) {
+	return (durationType / 4) * 5
+}
 
-		// see tick lengths: https://musescore.org/en/plugin-development/tick-length-values
+function addStar(cursor) {
+	var element = cursor.element;
+	element.tickLen = transformDuration(element.tickLen);
 
-		console.log(note);
-		console.log(cursor);
-		console.log(durationType);
+	if (element && element.type == Element.CHORD) {
+		// figure out placement of stars for a chord
 
+		var notes = element.notes;
+		for (var i = 0; i < notes.length; i++) {
+			var note = notes[i];
+			if (note) {
+
+				// figure out where stars should go
+
+			}
+		}
+
+	}
+
+	if (element && element.type == Element.REST) {
+
+		// figure out how to place a star beside the rest	
 		starGlyph = newElement(Element.STAFF_TEXT);
 		starGlyph.text = '\u2605';
 		starGlyph.userOff = Qt.point(0,0);
 		starGlyph.pos = Qt.point(note.pos.x + 2, note.pos.y);
 
 		cursor.add(starGlyph);
+
 	}
+
 }
 
 Dialog {
@@ -111,7 +126,7 @@ Dialog {
 
 function applyFunction() {
 	curScore.startCmd();
-	applyToNotesInSelection(addStar);
+	applyToNotesInSelection();
 	curScore.endCmd();
 	Qt.quit();
 }
